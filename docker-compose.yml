@@ -12,7 +12,8 @@ services:
     depends_on:
       - php
   php:
-    image: php:8.2-fpm
+    build: 
+      dockerfile: ./Dockerfile
     container_name: jx-php
     volumes:
       - "./src:/var/www/html"
