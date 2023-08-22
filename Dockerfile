@@ -5,3 +5,10 @@ RUN php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031
 RUN php composer-setup.php
 RUN php -r "unlink('composer-setup.php');"
 RUN mv composer.phar /usr/local/bin/composer
+
+RUN apt-get update && \
+    apt-get install -y \
+    git \
+    zip \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
