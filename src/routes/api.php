@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\ArrayToExelController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\ArrayToPdfController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +16,4 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('/array-to-excel', ArrayToExelController::class);
+Route::post('/array-to-pdf', ArrayToPdfController::class);
