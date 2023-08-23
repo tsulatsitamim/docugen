@@ -13,7 +13,7 @@ services:
       - php
   php:
     build: 
-      dockerfile: ./Dockerfile
+      context: src 
     container_name: jx-php
     volumes:
       - "./src:/var/www/html"
