@@ -15,4 +15,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/array-to-excel', ArrayToExelController::class);
+Route::post('/array-to-excel', ArrayToExelController::class);
