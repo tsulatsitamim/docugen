@@ -17,6 +17,3 @@ services:
     build: 
       context: src 
     container_name: jx-php
-    volumes:
-      - "./src:/var/www/html"
-      - "./etc/php/php.ini:/usr/local/etc/php/conf.d/php.ini"
