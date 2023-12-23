@@ -1,4 +1,4 @@
-# Laravel API Documentation
+# Docugen API Documentation
 
 ## Introduction
 
