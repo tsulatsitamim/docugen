@@ -20,3 +20,6 @@ RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --chown=www-data:www-data . /var/www/html
+
+WORKDIR /var/www/html
+RUN composer install
