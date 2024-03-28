@@ -1,25 +1,76 @@
-FROM php:8.2-fpm
+FROM chialab/php:8.2-fpm
 
-RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-RUN php -r "if (hash_file('sha384', 'composer-setup.php') === 'e21205b207c3ff031906575712edab6f13eb0b361f2085f1f1237b7126d785e826a450292b6cfd1d64d92e6563bbde02') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-RUN php composer-setup.php
-RUN php -r "unlink('composer-setup.php');"
-RUN mv composer.phar /usr/local/bin/composer
+# Set the working directory inside the container
+WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y \
-    zip \
-    git
 
-ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+####################################
+#####                         ######
+#####      NGINX SECTION      ######
+#####                         ######
+####################################
 
-RUN chmod +x /usr/local/bin/install-php-extensions && \
-    install-php-extensions gd zip
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor
 
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Copy Nginx server block
+COPY ./docker/site.conf /etc/nginx/sites-available/default
+COPY ./docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY ./docker/php.ini /etc/php/7.4/fpm/conf.d/99-php.ini
+COPY ./docker/index.php /app/public/index.php
 
-COPY --chown=www-data:www-data . /var/www/html
+# Clean Up!
+RUN apt-get clean; rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /usr/share/doc/*
 
-WORKDIR /var/www/html
-RUN composer install
+####################################
+#####                         ######
+#####       USER SECTION      ######
+#####                         ######
+####################################
+
+ARG UID=1000
+ARG USERNAME=appuser
+RUN useradd -G www-data -o -u ${UID} -ms /bin/bash ${USERNAME}
+
+RUN mkdir -p /var/cache/nginx
+
+RUN touch \
+    /var/run/supervisord.pid \
+    /var/run/nginx.pid
+
+RUN chown -R ${USERNAME}:${USERNAME} \
+    /var/cache/nginx \
+    /var/log/nginx \
+    /etc/nginx/conf.d \
+    /var/lib/nginx \
+    /var/run/supervisord.pid \
+    /var/run/nginx.pid \
+    /app
+
+RUN sed -i '/user www-data;/d' /etc/nginx/nginx.conf
+
+USER ${USERNAME}
+
+####################################
+#####                         ######
+#####     LARAVEL SECTION     ######
+#####                         ######
+####################################
+
+# Copy the local code to the container
+COPY --chown=${USERNAME} . /app
+
+# Install Laravel dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Set ownership and permissions
+RUN chgrp -R www-data storage bootstrap/cache
+RUN chmod -R ug+rwx storage bootstrap/cache
+
+# Expose port 80
+EXPOSE 80
+
+# Start supervisord to manage processes
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
